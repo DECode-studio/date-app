@@ -5,7 +5,8 @@
     "start": "expo start --clear",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "android:apk": "bash ./scripts/build-android-apk.sh"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.5",
