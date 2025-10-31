@@ -26,7 +26,8 @@ Create a `.env` file (or edit the existing one) with your backend URL:
 ```bash
 EXPO_PUBLIC_API_BASE_URL=https://your-api-host
 ```
-> The current setup points to `http://103.129.148.74:9000`. Update it if you run the API locally.
+> You could run yourself the application by running ther server by yourself by this Backend repository 
+> "https://github.com/DECode-studio/date-app-api"
 
 ### Running
 ```bash
