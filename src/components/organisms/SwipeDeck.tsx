@@ -1,12 +1,6 @@
-import { Dimensions, StyleSheet, Text, View } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-} from "react-native-reanimated";
-import { useEffect, useMemo } from "react";
+import { Animated, Dimensions, PanResponder, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import PersonCard from "./PersonCard";
 import { Person } from "../../features/people/types";
 
@@ -14,6 +8,7 @@ const { width } = Dimensions.get("window");
 const CARD_WIDTH = Math.min(width * 0.9, 360);
 const CARD_HEIGHT = CARD_WIDTH * 1.3;
 const SWIPE_THRESHOLD = width * 0.25;
+const TAP_THRESHOLD = 12;
 
 type Props = {
     people: Person[];
@@ -24,75 +19,127 @@ type Props = {
 };
 
 export default function SwipeDeck({ people, onLike, onNope, index, setIndex }: Props) {
-    const translateX = useSharedValue(0);
-    const translateY = useSharedValue(0);
-    const rotation = useSharedValue(0);
+    const position = useRef(new Animated.ValueXY()).current;
 
     useEffect(() => {
-        translateX.value = 0;
-        translateY.value = 0;
-        rotation.value = 0;
-    }, [index]);
+        position.setValue({ x: 0, y: 0 });
+    }, [index, position]);
 
     const current = people[index];
     const next = people[index + 1];
 
-    const pan = Gesture.Pan()
-        .onChange((event) => {
-            translateX.value = event.translationX;
-            translateY.value = event.translationY;
-            rotation.value = (event.translationX / width) * 12;
-        })
-        .onFinalize(() => {
-            if (Math.abs(translateX.value) > SWIPE_THRESHOLD) {
-                const direction = Math.sign(translateX.value);
-                const targetX = direction * (width + 120);
-                translateX.value = withSpring(targetX, { damping: 18, stiffness: 160 });
-                runOnJS(handleSwipe)(direction);
+    const handleSwipe = useCallback(
+        (direction: number) => {
+            if (!current) return;
+            if (direction > 0) {
+                onLike(current.id);
             } else {
-                translateX.value = withSpring(0);
-                translateY.value = withSpring(0);
-                rotation.value = withSpring(0);
+                onNope(current.id);
             }
-        });
+            setIndex(index + 1);
+        },
+        [current, index, onLike, onNope, setIndex],
+    );
 
-    const handleSwipe = (direction: number) => {
+    const resetPosition = useCallback(() => {
+        Animated.spring(position, {
+            toValue: { x: 0, y: 0 },
+            useNativeDriver: true,
+            tension: 170,
+            friction: 18,
+        }).start();
+    }, [position]);
+
+    const openDetail = useCallback(() => {
         if (!current) return;
-        if (direction > 0) {
-            onLike(current.id);
-        } else {
-            onNope(current.id);
-        }
-        setIndex(index + 1);
+        router.push({
+            pathname: "/liked/[id]",
+            params: { id: String(current.id) },
+        });
+    }, [current]);
+
+    const panResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onStartShouldSetPanResponder: () => true,
+                onMoveShouldSetPanResponder: (_, gesture) =>
+                    Math.abs(gesture.dx) > 5 || Math.abs(gesture.dy) > 5,
+                onPanResponderMove: (_, gesture) => {
+                    position.setValue({ x: gesture.dx, y: gesture.dy });
+                },
+                onPanResponderRelease: (_, gesture) => {
+                    if (Math.abs(gesture.dx) > SWIPE_THRESHOLD) {
+                        const direction = gesture.dx > 0 ? 1 : -1;
+                        Animated.spring(position, {
+                            toValue: { x: direction * (width + 120), y: gesture.dy },
+                            useNativeDriver: true,
+                            tension: 120,
+                            friction: 14,
+                        }).start(() => {
+                            position.setValue({ x: 0, y: 0 });
+                            handleSwipe(direction);
+                        });
+                    } else {
+                        const isTap =
+                            Math.abs(gesture.dx) < TAP_THRESHOLD &&
+                            Math.abs(gesture.dy) < TAP_THRESHOLD;
+                        resetPosition();
+                        if (isTap) {
+                            openDetail();
+                        }
+                    }
+                },
+                onPanResponderTerminate: resetPosition,
+            }),
+        [handleSwipe, openDetail, position, resetPosition],
+    );
+
+    const rotate = position.x.interpolate({
+        inputRange: [-width, 0, width],
+        outputRange: ["-12deg", "0deg", "12deg"],
+        extrapolate: "clamp",
+    });
+
+    const topStyle = {
+        transform: [
+            { translateX: position.x },
+            { translateY: position.y },
+            { rotate },
+        ],
     };
 
-    const topStyle = useAnimatedStyle(() => ({
-        transform: [
-            { translateX: translateX.value },
-            { translateY: translateY.value },
-            { rotate: `${rotation.value}deg` },
-        ],
-    }));
+    const nextCardTranslateY = position.x.interpolate({
+        inputRange: [-width, 0, width],
+        outputRange: [12, 16, 12],
+        extrapolate: "clamp",
+    });
 
-    const nextStyle = useAnimatedStyle(() => ({
-        transform: [
-            {
-                translateY: withSpring(16 - Math.min(Math.abs(translateX.value) / 12, 12)),
-            },
-            {
-                scale: withSpring(0.92 + Math.min(Math.abs(translateX.value) / 1200, 0.06)),
-            },
-        ],
-        opacity: withSpring(0.8),
-    }));
+    const nextCardScale = position.x.interpolate({
+        inputRange: [-width, 0, width],
+        outputRange: [0.98, 0.92, 0.98],
+        extrapolate: "clamp",
+    });
 
-    const likeBadgeStyle = useAnimatedStyle(() => ({
-        opacity: translateX.value > 0 ? Math.min(translateX.value / SWIPE_THRESHOLD, 1) : 0,
-    }));
+    const nextStyle = {
+        transform: [{ translateY: nextCardTranslateY }, { scale: nextCardScale }],
+        opacity: 0.8,
+    };
 
-    const nopeBadgeStyle = useAnimatedStyle(() => ({
-        opacity: translateX.value < 0 ? Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1) : 0,
-    }));
+    const likeBadgeStyle = {
+        opacity: position.x.interpolate({
+            inputRange: [-SWIPE_THRESHOLD, 0, SWIPE_THRESHOLD],
+            outputRange: [0, 0, 1],
+            extrapolate: "clamp",
+        }),
+    };
+
+    const nopeBadgeStyle = {
+        opacity: position.x.interpolate({
+            inputRange: [-SWIPE_THRESHOLD, 0, SWIPE_THRESHOLD],
+            outputRange: [1, 0, 0],
+            extrapolate: "clamp",
+        }),
+    };
 
     const stack = useMemo(() => [current, next].filter(Boolean) as Person[], [current, next]);
 
@@ -105,17 +152,18 @@ export default function SwipeDeck({ people, onLike, onNope, index, setIndex }: P
                 </Animated.View>
             )}
             {current && (
-                <GestureDetector gesture={pan}>
-                    <Animated.View style={[styles.cardWrapper, topStyle]}>
-                        <PersonCard person={current} />
-                        <Animated.View style={[styles.badge, styles.likeBadge, likeBadgeStyle]}>
-                            <Text style={styles.badgeText}>MATCH</Text>
-                        </Animated.View>
-                        <Animated.View style={[styles.badge, styles.nopeBadge, nopeBadgeStyle]}>
-                            <Text style={styles.badgeText}>PASS</Text>
-                        </Animated.View>
+                <Animated.View
+                    style={[styles.cardWrapper, topStyle]}
+                    {...panResponder.panHandlers}
+                >
+                    <PersonCard person={current} />
+                    <Animated.View style={[styles.badge, styles.likeBadge, likeBadgeStyle]}>
+                        <Text style={styles.badgeText}>MATCH</Text>
                     </Animated.View>
-                </GestureDetector>
+                    <Animated.View style={[styles.badge, styles.nopeBadge, nopeBadgeStyle]}>
+                        <Text style={styles.badgeText}>PASS</Text>
+                    </Animated.View>
+                </Animated.View>
             )}
         </View>
     );

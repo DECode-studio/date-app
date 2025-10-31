@@ -10,8 +10,8 @@ import { useLogin } from "../../features/auth/hooks";
 const HERO_GRADIENT = ["#FD7285", "#FE86A6", "#FF9BC2"] as const;
 
 export default function SignIn() {
-    const [email, setEmail] = useState("jane@example.com");
-    const [password, setPassword] = useState("secret123");
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
     const { mutateAsync, isPending } = useLogin();
 
     const benefits = useMemo(

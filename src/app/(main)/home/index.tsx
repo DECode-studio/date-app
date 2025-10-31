@@ -1,11 +1,10 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import { ActivityIndicator, Button, IconButton, Text, Chip } from "react-native-paper";
-import SwipeDeck from "../../components/organisms/SwipeDeck";
-import { useDislike, useLike, usePeople } from "../../features/people/hooks";
+import SwipeDeck from "../../../components/organisms/SwipeDeck";
+import { useDislike, useLike, usePeople } from "../../../features/people/hooks";
 
 const BACKGROUND = ["#FD7285", "#FE86A6", "#FF9BC2"] as const;
 
@@ -89,12 +88,6 @@ export default function Home() {
                                 Swipe right to keep the sparks flying.
                             </Text>
                         </View>
-                        <IconButton
-                            icon="heart-outline"
-                            size={24}
-                            mode="contained-tonal"
-                            onPress={() => router.push("/(main)/liked")}
-                        />
                     </View>
 
                     <View style={styles.chipsRow}>
@@ -132,12 +125,6 @@ export default function Home() {
                             disabled={!currentPerson}
                             onPress={handleLike}
                         />
-                        <IconButton
-                            icon="star-outline"
-                            size={28}
-                            mode="contained-tonal"
-                            onPress={() => router.push("/(main)/liked")}
-                        />
                     </View>
                 </View>
             </SafeAreaView>
@@ -159,7 +146,7 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: "row",
-        justifyContent: "space-between",
+        justifyContent: "flex-start",
         alignItems: "center",
     },
     headerText: {
@@ -200,7 +187,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-evenly",
         alignItems: "center",
-        marginTop: 16,
+        marginBottom: 25,
     },
     loading: {
         flex: 1,

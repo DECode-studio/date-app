@@ -10,10 +10,10 @@ import { useRegister } from "../../features/auth/hooks";
 const HERO_GRADIENT = ["#FD7285", "#FE86A6", "#FF9BC2"] as const;
 
 export default function Register() {
-    const [name, setName] = useState("Jane Doe");
-    const [email, setEmail] = useState("jane@example.com");
-    const [password, setPassword] = useState("secret123");
-    const [confirm, setConfirm] = useState("secret123");
+    const [name, setName] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+    const [confirm, setConfirm] = useState<string>("");
     const { mutateAsync, isPending } = useRegister();
 
     const steps = useMemo(

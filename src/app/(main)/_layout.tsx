@@ -1,17 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { useColorScheme } from "react-native";
+import { useColorScheme, ViewStyle } from "react-native";
 
-const TAB_BAR_STYLE = {
-    position: "absolute" as const,
-    left: 16,
-    right: 16,
+const TAB_BAR_STYLE: ViewStyle = {
+    position: "absolute",
     bottom: 16,
-    borderRadius: 28,
+    left: 20,
+    right: 20,
     height: 68,
+    borderRadius: 28,
     backgroundColor: "rgba(255, 255, 255, 0.85)",
     borderWidth: 0,
     elevation: 0,
+    paddingBottom: 0,
 };
 
 export default function MainLayout() {
@@ -30,12 +31,14 @@ export default function MainLayout() {
                 },
                 tabBarStyle: {
                     ...TAB_BAR_STYLE,
-                    backgroundColor: isDark ? "rgba(32, 9, 33, 0.92)" : "rgba(255, 255, 255, 0.88)",
+                    backgroundColor: isDark
+                        ? "rgba(32, 9, 33, 0.92)"
+                        : "rgba(255, 255, 255, 0.88)",
                 },
             }}
         >
             <Tabs.Screen
-                name="home"
+                name="home/index"
                 options={{
                     title: "Discover",
                     tabBarIcon: ({ color, size }: { color: string; size: number }) => (
@@ -44,18 +47,12 @@ export default function MainLayout() {
                 }}
             />
             <Tabs.Screen
-                name="profile"
+                name="profile/index"
                 options={{
                     title: "Profile",
                     tabBarIcon: ({ color, size }: { color: string; size: number }) => (
                         <Ionicons name="person-circle" size={size} color={color} />
                     ),
-                }}
-            />
-            <Tabs.Screen
-                name="liked"
-                options={{
-                    href: null,
                 }}
             />
         </Tabs>

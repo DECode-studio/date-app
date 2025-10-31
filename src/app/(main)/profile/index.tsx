@@ -1,11 +1,11 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, Button, List, Surface, Text } from "react-native-paper";
-import { useAuth } from "../../store/auth.store";
+import { useAuth } from "../../../store/auth.store";
 
-const BACKGROUND = ["#F4EFFA", "#F8F0F8", "#FFF5F6"] as const;
+const BACKGROUND = ["#FD7285", "#FE86A6", "#FF9BC2"] as const;
 
 export default function Profile() {
     const { user, logout } = useAuth();
@@ -23,7 +23,10 @@ export default function Profile() {
     return (
         <LinearGradient colors={BACKGROUND} style={styles.background}>
             <SafeAreaView style={styles.safeArea}>
-                <View style={styles.container}>
+                <ScrollView
+                    contentContainerStyle={styles.container}
+                    showsVerticalScrollIndicator={false}
+                >
                     <Surface elevation={4} style={styles.profileCard}>
                         <Avatar.Text
                             size={96}
@@ -60,10 +63,11 @@ export default function Profile() {
                     <View style={styles.actions}>
                         <Button
                             mode="contained"
-                            onPress={() => router.push("/(main)/liked")}
+                            onPress={() => router.push("/liked")}
                             contentStyle={styles.buttonContent}
+                            icon="heart"
                         >
-                            Edit profile
+                            View liked people
                         </Button>
                         <Button
                             mode="outlined"
@@ -72,11 +76,8 @@ export default function Profile() {
                         >
                             Sign out
                         </Button>
-                        <Text style={styles.helperText}>
-                            Need help? <Text style={styles.link}>Contact support</Text>
-                        </Text>
                     </View>
-                </View>
+                </ScrollView>
             </SafeAreaView>
         </LinearGradient>
     );
@@ -90,7 +91,6 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     container: {
-        flex: 1,
         paddingHorizontal: 24,
         paddingVertical: 32,
         gap: 24,
@@ -124,14 +124,5 @@ const styles = StyleSheet.create({
     },
     buttonContent: {
         paddingVertical: 6,
-    },
-    helperText: {
-        textAlign: "center",
-        color: "#49454F",
-        fontSize: 12,
-    },
-    link: {
-        color: "#6750A4",
-        fontWeight: "600",
     },
 });

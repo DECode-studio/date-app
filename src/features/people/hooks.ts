@@ -20,6 +20,16 @@ export const useLikedPeople = () =>
         queryFn: () => api.get<{ data: Person[] }>("/api/people/liked").then(r => r.data.data),
     });
 
+export const usePerson = (personId?: number) =>
+    useQuery({
+        queryKey: ["person", personId],
+        queryFn: async () => {
+            const response = await api.get<{ data: Person }>(`/api/people/${personId}`);
+            return response.data.data;
+        },
+        enabled: typeof personId === "number" && Number.isFinite(personId),
+    });
+
 export const useLike = () => {
     const qc = useQueryClient();
     return useMutation({

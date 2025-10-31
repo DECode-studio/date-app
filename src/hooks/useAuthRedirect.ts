@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import type { Href } from "expo-router";
-import { getToken } from "../lib/storage";
+import { clearToken, getToken } from "../lib/storage";
+import { isJwtExpired } from "../lib/jwt";
 
 export function useAuthRedirect(delayMs = 3000) {
     const [isChecking, setIsChecking] = useState(true);
@@ -23,9 +24,12 @@ export function useAuthRedirect(delayMs = 3000) {
                 const token = await getToken();
                 if (!mounted) return;
 
-                if (token) {
+                if (token && !isJwtExpired(token, 30)) {
                     redirectAfterDelay("/(main)/home");
                 } else {
+                    if (token) {
+                        await clearToken();
+                    }
                     redirectAfterDelay("/(auth)/sign-in");
                 }
             } catch {
